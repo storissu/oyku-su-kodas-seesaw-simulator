@@ -34,6 +34,11 @@ function generateColor() {
   return color_palette[Math.floor(Math.random() * color_palette.length)];
 }
 
+function changePlankTiltVisual(tiltAngle) {
+  const plank = document.querySelector(".plank-container");
+  plank.style.transform = `rotate(${tiltAngle}deg)`;
+}
+
 function generateRandomWeight() {
   return Math.floor(Math.random() * 10) + 1;
 }
@@ -115,22 +120,28 @@ function clickableArea() {
   });
 
   clickablePlank.addEventListener("mousemove", (e) => {
-    previewCircle.style.left = `${e.x}px`;
-    previewCircle.style.top = `${e.y}px`;
-
+    const pivotElement = document.querySelector(".pivot");
+    const pivotRect = pivotElement.getBoundingClientRect();
     const rect = clickablePlank.getBoundingClientRect();
-
     const mouseX = e.clientX;
-    const plankTop = rect.top;
+    const pivotCenter = rect.left + rect.width / 2;
 
-    const previewHeight = 100;
+    const plankTop = rect.top;
+    const pivotTop = pivotRect.top;
+
+    const previewHeight = pivotTop - 100;
+
+    const angleRad = (tiltAngle * Math.PI) / 180;
+
+    const dx = mouseX - pivotCenter;
+    const y_OnPlank = pivotTop + dx * Math.tan(angleRad);
 
     previewCircle.style.left = `${mouseX}px`;
-    previewCircle.style.top = `${plankTop - previewHeight}px`;
+    previewCircle.style.top = `${previewHeight}px`;
 
     previewLine.style.left = `${mouseX}px`;
-    previewLine.style.top = `${plankTop - previewHeight}px`;
-    previewLine.style.height = `${previewHeight}px`;
+    previewLine.style.top = `${previewHeight}px`;
+    previewLine.style.height = `${y_OnPlank - previewHeight}px`;
   });
 
   clickablePlank.addEventListener("click", (e) => {
@@ -153,6 +164,7 @@ function clickableArea() {
     console.log(clickX);
     console.log(pivot);
     tiltAngle = calculateTiltAngle(leftTorque, rightTorque);
+    changePlankTiltVisual(tiltAngle);
     displayInfo();
     previewCircle.style.backgroundColor = generateColor();
     updateCircleSize();
