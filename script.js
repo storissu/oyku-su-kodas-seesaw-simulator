@@ -7,12 +7,14 @@ let tiltAngle = 0;
 let previewCircle;
 let previewLine;
 let isDropping = false;
+
 //you can only click and drop weight in the clickable area
-const clickableArea = document.querySelector(".plank-container");
+const clickableArea = document.querySelector(".plank");
 
 //.................................
 //Calculations
 //.................................
+
 function calculateTorque(weight, distance) {
   return weight * distance;
 }
@@ -45,9 +47,59 @@ function generateColor() {
   return color_palette[Math.floor(Math.random() * color_palette.length)];
 }
 
+//necessary calculations for drop operation
+function calculateDrop(mouseX, size, targetTiltAngle = tiltAngle) {
+  const plankElement = document.querySelector(".plank");
+  const pivotElement = document.querySelector(".pivot");
+  const pivotRect = pivotElement.getBoundingClientRect();
+  const plankRect = plankElement.getBoundingClientRect();
+  const clickableAreaRect = clickableArea.getBoundingClientRect();
+
+  const center = clickableAreaRect.left + clickableAreaRect.width / 2;
+  const previewHeight = pivotRect.top - 150; //ball is dropped from preview ball and it was put 150px above the plank in the generatePreviewCircle() function
+  const angleRad = (targetTiltAngle * Math.PI) / 180; //to determine the slope
+  const halfPlank = plankElement ? plankElement.offsetWidth / 2 : 0;
+  const temp_dx = mouseX - center;
+  const dx = Math.max(-halfPlank, Math.min(halfPlank, temp_dx));
+  const plank_x = halfPlank + dx; //location according to the plank
+  const dropLocation = getDropLocation(plankElement, plank_x, size);
+  const dropLocation_x = dropLocation.x;
+  const dropLocation_y = dropLocation.y;
+  const previewLineEnd_Y = dropLocation.y + size / 2;
+
+  return {
+    previewHeight,
+    dropLocation_y,
+    previewLineEnd_Y,
+    dx,
+    plank_x,
+    dropLocation_x,
+  };
+}
+
+//to find where to add the ball on the plank(.plank) according to the calculations that was done in calculateDrop() function
+function getDropLocation(plankElement, plank_x, size) {
+  const probeBall = document.createElement("div");
+  probeBall.className = "placed-ball";
+  probeBall.style.width = `${size}px`;
+  probeBall.style.height = `${size}px`;
+  probeBall.style.left = `${plank_x}px`;
+  probeBall.style.top = "0";
+  probeBall.style.visibility = "hidden";
+  plankElement.appendChild(probeBall);
+
+  const rect = probeBall.getBoundingClientRect();
+  probeBall.remove();
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+}
+
 //.................................
 //Visual updates and adjustments
 //.................................
+
 function initializeInfo() {
   currentWeight = 0;
   rightWeight = 0;
@@ -118,100 +170,63 @@ function generatePreview() {
   updateCircleSize();
 }
 
-function getBallLandingCenter(plankElement, localX, size) {
-  const probeBall = document.createElement("div");
-  probeBall.className = "placed-ball";
-  probeBall.style.width = `${size}px`;
-  probeBall.style.height = `${size}px`;
-  probeBall.style.left = `${localX}px`;
-  probeBall.style.top = "0";
-  probeBall.style.visibility = "hidden";
-  plankElement.appendChild(probeBall);
-
-  const rect = probeBall.getBoundingClientRect();
-  probeBall.remove();
-  return {
-    x: rect.left + rect.width / 2,
-    y: rect.top + rect.height / 2,
-  };
-}
-
-function getDropGeometry(mouseX, size, targetTiltAngle = tiltAngle) {
-  const plankElement = document.querySelector(".plank");
-  const pivotElement = document.querySelector(".pivot");
-  const pivotRect = pivotElement.getBoundingClientRect();
-  const plankRect = plankElement.getBoundingClientRect();
-  const clickableRect = clickableArea.getBoundingClientRect();
-  const pivotCenter = clickableRect.left + clickableRect.width / 2;
-  const previewHeight = pivotRect.top - 150;
-  const angleRad = (targetTiltAngle * Math.PI) / 180;
-  const halfPlank = plankElement ? plankElement.offsetWidth / 2 : 0;
-  const rawDx = mouseX - pivotCenter;
-  const dx = Math.max(-halfPlank, Math.min(halfPlank, rawDx));
-  const localX = halfPlank + dx;
-  const landingCenter = getBallLandingCenter(plankElement, localX, size);
-  const dropX = landingCenter.x;
-  const ballCenterY = landingCenter.y;
-  const lineEndY = landingCenter.y + size / 2;
-
-  return { previewHeight, ballCenterY, lineEndY, dx, localX, dropX };
-}
-
 function updatePreview(mouseX) {
   const size = Math.log(currentWeight + 1) * 17;
-  const { previewHeight, lineEndY, dropX } = getDropGeometry(mouseX, size);
+  const { previewHeight, previewLineEnd_Y, dropLocation_x } = calculateDrop(
+    mouseX,
+    size,
+  );
 
-  previewCircle.style.left = `${dropX}px`;
+  previewCircle.style.left = `${dropLocation_x}px`;
   previewCircle.style.top = `${previewHeight}px`;
 
-  previewLine.style.left = `${dropX}px`;
+  previewLine.style.left = `${dropLocation_x}px`;
   previewLine.style.top = `${previewHeight}px`;
-  previewLine.style.height = `${lineEndY - previewHeight}px`;
+  previewLine.style.height = `${previewLineEnd_Y - previewHeight}px`;
 }
 
-function spawnBallOnPlank(localX, color, size) {
+//puts a ball on the plank according to the calculations
+function putBallOnPlank(plank_x, color, size) {
   const plankElement = document.querySelector(".plank");
   if (!plankElement) return;
   const ball = document.createElement("div");
-  const clampedLocalX = Math.max(0, Math.min(plankElement.offsetWidth, localX));
+  const limit_plankX = Math.max(0, Math.min(plankElement.offsetWidth, plank_x)); //to prevent the ball from going outside
 
   ball.className = "placed-ball";
   ball.style.backgroundColor = color;
   ball.style.width = `${size}px`;
   ball.style.height = `${size}px`;
-  ball.style.left = `${clampedLocalX}px`;
+  ball.style.left = `${limit_plankX}px`;
   ball.style.top = "0";
   plankElement.appendChild(ball);
 }
 
-function animateDropToPlank(clickX, onComplete) {
+function dropAnimation(clickX, onComplete) {
   const color = previewCircle.style.backgroundColor;
   const size = Math.log(currentWeight + 1) * 17;
-  const { previewHeight, ballCenterY, localX, dropX } = getDropGeometry(
-    clickX,
-    size,
-  );
+  const { previewHeight, dropLocation_y, plank_x, dropLocation_x } =
+    calculateDrop(clickX, size);
   const fallingBall = document.createElement("div");
 
   fallingBall.className = "preview-circle";
   fallingBall.style.backgroundColor = color;
   fallingBall.style.width = `${size}px`;
   fallingBall.style.height = `${size}px`;
-  fallingBall.style.left = `${dropX}px`;
+  fallingBall.style.left = `${dropLocation_x}px`;
   fallingBall.style.top = `${previewHeight}px`;
   fallingBall.style.display = "block";
   fallingBall.style.transition = "top 360ms ease-in";
   document.body.appendChild(fallingBall);
 
   requestAnimationFrame(() => {
-    fallingBall.style.top = `${ballCenterY}px`;
+    fallingBall.style.top = `${dropLocation_y}px`;
   });
 
   fallingBall.addEventListener(
     "transitionend",
     () => {
       fallingBall.remove();
-      spawnBallOnPlank(localX, color, size);
+      putBallOnPlank(plank_x, color, size);
       if (typeof onComplete === "function") onComplete();
     },
     { once: true },
@@ -259,7 +274,7 @@ function generateEventListeners() {
     }
     const nextTiltAngle = calculateTiltAngle(leftTorque, rightTorque);
     isDropping = true;
-    animateDropToPlank(clickX, () => {
+    dropAnimation(clickX, () => {
       tiltAngle = nextTiltAngle;
       changePlankTiltVisual(tiltAngle);
       displayInfo();
