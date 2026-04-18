@@ -4,7 +4,7 @@ let leftWeight = 0;
 let leftTorque = 0;
 let rightTorque = 0;
 let tiltAngle = 0;
-let newCursor;
+let previewCircle;
 
 function initializeInfo() {
   currentWeight = 0;
@@ -13,22 +13,22 @@ function initializeInfo() {
   leftTorque = 0;
   rightTorque = 0;
   tiltAngle = 0;
-  newCursor;
+  previewCircle;
 
   displayInfo();
 }
 //color palette is used instead of random color generation because of the UX consistency
 function generateColor() {
   const color_palette = [
-    "#ff69b4cb",
-    "#ff85c2c4",
-    "#ff99ccba",
-    "#ff4da698",
-    "#ffb6d9d3",
-    "#fffebebc",
-    "#b9e6ffbe",
-    "#c2f8c5d3",
-    "#9ac8e1c0",
+    "#ff69b4",
+    "#ff85c2",
+    "#ff99cc",
+    "#ff4da6",
+    "#ffb6d9",
+    "#fffebe",
+    "#b9e6ff",
+    "#c2f8c5",
+    "#9ac8e1",
   ];
 
   return color_palette[Math.floor(Math.random() * color_palette.length)];
@@ -81,42 +81,60 @@ function displayInfo() {
   tiltAngleElement.textContent = `${tiltAngle.toFixed(1)}° `;
 }
 
-//size of the cursor is calculated according to the weight
-function updateCursorSize() {
-  if (!newCursor) return;
-  const size = Math.log(currentWeight + 1) * 30;
-  newCursor.style.width = `${size}px`;
-  newCursor.style.height = `${size}px`;
+function updateCircleSize() {
+  if (!previewCircle) return;
+  const size = Math.log(currentWeight + 1) * 25;
+  previewCircle.style.width = `${size}px`;
+  previewCircle.style.height = `${size}px`;
 }
 
-//cursor changes to a circle when it comes to the seesaw area
-function changeCursor() {
-  const seesaw = document.querySelector(".plank-container");
-  newCursor = document.createElement("div");
-  newCursor.className = "cursor-circle";
-  document.body.appendChild(newCursor);
+function clickableArea() {
+  const clickablePlank = document.querySelector(".plank-container");
+  previewCircle = document.createElement("div");
+  previewCircle.className = "preview-circle";
+  document.body.appendChild(previewCircle);
 
-  newCursor.style.backgroundColor = generateColor();
+  const previewLine = document.createElement("div");
+  previewLine.className = "preview-line";
+  document.body.appendChild(previewLine);
 
-  updateCursorSize(newCursor);
+  previewCircle.style.backgroundColor = generateColor();
 
-  seesaw.addEventListener("mouseenter", () => {
+  updateCircleSize();
+
+  clickablePlank.addEventListener("mouseenter", () => {
     document.body.style.cursor = "none";
-    newCursor.style.display = "block";
+    previewCircle.style.display = "block";
+    previewLine.style.display = "block";
   });
 
-  seesaw.addEventListener("mouseleave", () => {
+  clickablePlank.addEventListener("mouseleave", () => {
     document.body.style.cursor = "default";
-    newCursor.style.display = "none";
+    previewCircle.style.display = "none";
+    previewLine.style.display = "none";
   });
 
-  seesaw.addEventListener("mousemove", (e) => {
-    newCursor.style.left = `${e.x}px`;
-    newCursor.style.top = `${e.y}px`;
+  clickablePlank.addEventListener("mousemove", (e) => {
+    previewCircle.style.left = `${e.x}px`;
+    previewCircle.style.top = `${e.y}px`;
+
+    const rect = clickablePlank.getBoundingClientRect();
+
+    const mouseX = e.clientX;
+    const plankTop = rect.top;
+
+    const previewHeight = 100;
+
+    previewCircle.style.left = `${mouseX}px`;
+    previewCircle.style.top = `${plankTop - previewHeight}px`;
+
+    previewLine.style.left = `${mouseX}px`;
+    previewLine.style.top = `${plankTop - previewHeight}px`;
+    previewLine.style.height = `${previewHeight}px`;
   });
 
-  seesaw.addEventListener("click", (e) => {
-    const seesawRect = seesaw.getBoundingClientRect();
+  clickablePlank.addEventListener("click", (e) => {
+    const seesawRect = clickablePlank.getBoundingClientRect();
     const pivot = seesawRect.left + seesawRect.width / 2;
     const clickX = e.clientX;
     const distanceFromPivot = clickX - pivot;
@@ -136,11 +154,11 @@ function changeCursor() {
     console.log(pivot);
     tiltAngle = calculateTiltAngle(leftTorque, rightTorque);
     displayInfo();
-    newCursor.style.backgroundColor = generateColor();
-    updateCursorSize(newCursor);
+    previewCircle.style.backgroundColor = generateColor();
+    updateCircleSize();
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
   initializeInfo();
-  changeCursor();
+  clickableArea();
 });
