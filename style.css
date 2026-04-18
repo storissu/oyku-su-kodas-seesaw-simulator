@@ -245,6 +245,23 @@ button:active .undo-icon {
   transform: rotate(-90deg);
 }
 
+.history-header,
+.history-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  align-items: center;
+}
+
+.history-header {
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+}
+
+.history-row {
+  border-bottom: 1px solid #ddd;
+}
+
 .history-container {
   background-color: #ffffff61;
   border-radius: 20px;

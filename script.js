@@ -7,7 +7,7 @@ let tiltAngle = 0;
 let previewCircle;
 let previewLine;
 let isDropping = false;
-
+let dropHistory = JSON.parse(localStorage.getItem("dropHistory")) || [];
 //you can only click and drop weight in the clickable area
 const clickableArea = document.querySelector(".plank");
 
@@ -262,6 +262,47 @@ function dropAnimation(clickX, weight, color, onComplete) {
 }
 
 //..............................................
+//Local Storage Functions
+//..............................................
+
+function saveDropToHistory(weight, side, positionX) {
+  const entry = {
+    weight: weight,
+    side: side, // left or right
+    positionX: Math.round(positionX),
+    time: new Date().toISOString(),
+  };
+
+  dropHistory.push(entry);
+
+  localStorage.setItem("dropHistory", JSON.stringify(dropHistory));
+  displayDropHistory();
+}
+
+function displayDropHistory() {
+  const list = document.getElementById("history-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  const history = JSON.parse(localStorage.getItem("dropHistory")) || [];
+
+  history.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "history-row";
+
+    row.innerHTML = `
+      <span>${index + 1}</span>
+      <span>${item.weight} kg</span>
+      <span>${item.side}</span>
+      <span>${item.positionX}px</span>
+      <span>${new Date(item.time).toLocaleTimeString()}</span>
+    `;
+
+    list.appendChild(row);
+  });
+}
+//..............................................
 //Event Listeners for Clickable Area (The Plank(.plank))
 //..............................................
 
@@ -290,17 +331,21 @@ function generateEventListeners() {
     const pivot = plankRect.left + plankRect.width / 2;
     const clickX = e.clientX;
     const distanceFromPivot = clickX - pivot;
+    const { dx } = calculateDrop(e.clientX, updateCircleSize());
+
     //the preview wasnt updating itself until the ball is dropped so these temp variables for hold the values then update preview so the current values dont get lost
     const temp_currentWeight = currentWeight;
     const temp_currentColor = previewCircle.style.backgroundColor;
-
+    let side;
     if (distanceFromPivot < 0) {
+      side = "left";
       leftWeight += temp_currentWeight;
       leftTorque += calculateTorque(
         temp_currentWeight,
         Math.abs(distanceFromPivot),
       );
     } else {
+      side = "right";
       rightWeight += temp_currentWeight;
       rightTorque += calculateTorque(
         temp_currentWeight,
@@ -317,7 +362,7 @@ function generateEventListeners() {
     dropAnimation(clickX, temp_currentWeight, temp_currentColor, () => {
       tiltAngle = nextTiltAngle;
       changePlankTiltVisual(tiltAngle);
-      updatePreview(clickX);
+      saveDropToHistory(temp_currentWeight, side, dx);
       isDropping = false;
     });
   });
@@ -330,4 +375,5 @@ function generateEventListeners() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeInfo();
   generateEventListeners();
+  displayDropHistory();
 });
