@@ -99,7 +99,7 @@ function changePlankTiltVisual(tiltAngle) {
 
 function updateCircleSize() {
   if (!previewCircle) return;
-  const size = Math.log(currentWeight + 1) * 25;
+  const size = Math.log(currentWeight + 1) * 17;
   previewCircle.style.width = `${size}px`;
   previewCircle.style.height = `${size}px`;
 }
@@ -126,12 +126,12 @@ function updatePreview(mouseX) {
   const plankTop = plankRect.top;
   const pivotTop = pivotRect.top;
 
-  const previewHeight = pivotTop - 100;
+  const previewHeight = pivotTop - 150;
 
   const angleRad = (tiltAngle * Math.PI) / 180;
 
   const dx = mouseX - pivotCenter;
-  const y_OnPlank = pivotTop + dx * Math.tan(angleRad);
+  const y_OnPlank = pivotTop - 20 + dx * Math.tan(angleRad);
 
   previewCircle.style.left = `${mouseX}px`;
   previewCircle.style.top = `${previewHeight}px`;
