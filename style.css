@@ -252,7 +252,7 @@ button:active .undo-icon {
 }
 
 .preview-line {
-  position: absolute;
+  position: fixed;
   width: 0;
   border-left: 2px dashed rgba(101, 76, 90, 0.5);
   pointer-events: none;

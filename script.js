@@ -142,7 +142,7 @@ function updatePreview(mouseX) {
 }
 
 //..............................................
-//Event Listeners for Clickable Area
+//Event Listeners for Clickable Area (The Plank)
 //..............................................
 function generateEventListeners() {
   generatePreview();
@@ -179,12 +179,17 @@ function generateEventListeners() {
       );
     }
     tiltAngle = calculateTiltAngle(leftTorque, rightTorque);
-    changePlankTiltVisual(tiltAngle);
 
+    changePlankTiltVisual(tiltAngle);
     displayInfo();
     previewCircle.style.backgroundColor = generateColor();
     updateCircleSize();
     updatePreview(clickX);
+  });
+
+  window.addEventListener("scroll", () => {
+    previewCircle.style.display = "none";
+    previewLine.style.display = "none";
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
