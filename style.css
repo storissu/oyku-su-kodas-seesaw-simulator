@@ -334,7 +334,7 @@ button:active .undo-icon {
 }
 .preview-circle {
   border-radius: 50%;
-  position: absolute;
+  position: fixed;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
