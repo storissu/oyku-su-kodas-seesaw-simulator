@@ -79,7 +79,7 @@ h2 {
   font-family: "Gabarito", sans-serif;
 }
 #tip:hover .info-title,
-#tip:hover .info-text {
+#tip:hover .tip-icon {
   opacity: 0;
 }
 
@@ -103,6 +103,10 @@ h2 {
   font-family: "Gabarito", sans-serif;
   font-weight: bold;
   color: #8c516da6;
+}
+
+.tip-icon {
+  font-size: 18px;
 }
 
 .seesaw-container {
